@@ -6,7 +6,6 @@
       self.nixosModules.myMachineHardware
       self.nixosModules.niri
       self.nixosModules.git
-      ./features/candy.nix
       ];
 
     # Bootloader.
@@ -121,6 +120,12 @@
      polkit_gnome 
      lxappearance
      themechanger 
+     iosevka
+     nerd-fonts.fira-code
+     nerd-fonts.fira-mono
+     beauty-line-icon-theme
+     sweet-folders
+     sweet-nova
   ];  
 
   # Some programs need SUID wrappers, can be configured further or are
