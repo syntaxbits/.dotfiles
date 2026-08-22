@@ -1,4 +1,4 @@
-{ self, inputs, ... }: {
+{ self, inputs, lib, ... }: {
 
   flake.nixosModules.myMachineConfiguration = { config, pkgs, lib, ... }: {
     # import any other modules from here
@@ -6,6 +6,7 @@
       self.nixosModules.myMachineHardware
       self.nixosModules.niri
       self.nixosModules.git
+      ./features/candy.nix
       ];
 
     # Bootloader.
@@ -39,6 +40,9 @@
     LC_TELEPHONE = "en_GB.UTF-8";
     LC_TIME = "en_GB.UTF-8";
   };
+
+  # Enabling polkit
+  security.polkit.enable = true;
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
@@ -85,9 +89,6 @@
     ];
   };
 
-  # Install firefox.
-  programs.firefox.enable = true;
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
   
@@ -116,8 +117,11 @@
      bitwarden-desktop
      tree
      gitkraken
-     opencode  
-  ];
+     opencode
+     polkit_gnome 
+     lxappearance
+     themechanger 
+  ];  
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
