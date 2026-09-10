@@ -118,6 +118,7 @@
      gitkraken
      opencode
      polkit_gnome 
+     telegram-desktop
      lxappearance
      themechanger 
      iosevka
@@ -126,6 +127,8 @@
      beauty-line-icon-theme
      sweet-folders
      sweet-nova
+     clementine
+     haruna
   ];  
 
   # Some programs need SUID wrappers, can be configured further or are
