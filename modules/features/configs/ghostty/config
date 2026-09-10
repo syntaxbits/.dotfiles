@@ -1,0 +1,60 @@
+# This is the configuration file for Ghostty.
+# It is not initialized with any default options set because the majority
+# of users should only need to set a few things. While it is recommended to read
+# the docs, a brief explanation of the syntax for this file can be found below.
+
+# Syntax
+# Any line beginning with a # is a comment.
+# Spacing around the equals sign does not matter.
+# Empty values reset the configuration to the default value.
+
+# Fonts
+font-size = 16
+font-style = medium
+bold-is-bright = true
+theme = Catppuccin Mocha
+font-family = "JetBrainsMono Nerd Font Mono"
+
+# Cursor
+cursor-style = block_hollow 
+cursor-style-blink = false
+mouse-hide-while-typing = true
+
+# Clipboard
+copy-on-select = clipboard
+clipboard-trim-trailing-spaces = true
+
+# Mouse
+mouse-scroll-multiplier = 2
+mouse-hide-while-typing = true
+
+# Window
+initial-window = true
+resize-overlay = never
+background-opacity = 0.8
+window-save-state = always
+window-step-resize = false
+background-blur-radius = 0
+window-padding-balance = true
+confirm-close-surface = false
+
+# Behavior
+auto-update = check
+auto-update-channel = stable
+quit-after-last-window-closed = true
+shell-integration-features = true
+
+# splits
+keybind = super+b>r=new_split:right
+keybind = super+b>d=new_split:down
+keybind = super+b>e=equalize_splits
+keybind = super+b>z=toggle_split_zoom
+
+# extras
+copy-on-select = clipboard
+focus-follows-mouse = true
+link-url = true
+
+# macOS specific
+macos-option-as-alt = true
+macos-titlebar-style = transparent

@@ -1,0 +1,96 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/syntax.html
+name: Nix
+file_extensions:
+  - nix
+scope: source.nix
+
+contexts:
+  main:
+    # Comments
+    - match: /\*.*
+      scope: comment.block.nix
+    - match: '#.*'
+      scope: comment.line.nix
+
+    # Keywords
+    - match: \b(let|in|rec|if|then|else|assert|with|import|inherit|or)\b
+      scope: keyword.control.nix
+
+    # Built-in functions
+    - match: \b(builtins|toJSON|fromJSON|toString|map|filter)\b
+      scope: support.function.builtin.nix
+
+    # Booleans and null
+    - match: \b(true|false|null)\b
+      scope: constant.language.boolean.nix
+
+    # Numeric literals
+    - match: \b[0-9]+(\.[0-9]+)?\b
+      scope: constant.numeric.nix
+
+    # Strings, with interpolation
+    - match: '"'
+      push:
+        - meta_scope: string.quoted.double.nix
+        - match: '"'
+          pop: true
+        - match: '\\.'
+          scope: constant.character.escape.nix
+        - match: '\$\{'
+          push:
+            - meta_content_scope: meta.interpolation.nix
+            - match: '\}'
+              pop: true
+            - include: main
+
+    # Paths
+    - match: '<[^>]*>'
+      scope: string.other.path.nix
+
+    - match: /[\w\-+/.]+/
+      scope: string.unquoted.path.nix
+
+    # Variable assignment and identifiers
+    - match: \b([A-Za-z_][A-Za-z0-9-_]*)(\s*)(=)
+      captures:
+        1: variable.other.assignment.nix
+        3: keyword.operator.assignment.nix
+
+    # Functions and parameters
+    - match: \b([A-Za-z_][A-Za-z0-9-_]*)(\s*\:\s*)
+      captures:
+        1: variable.parameter.function.nix
+        2: punctuation.separator.parameters.nix
+
+    # Braces and brackets
+    - match: \{
+      scope: punctuation.section.block.begin.nix
+      push: curly-braces
+
+    - match: \(
+      scope: punctuation.section.group.begin.nix
+      push: round-braces
+
+    - match: \[
+      scope: punctuation.section.brackets.begin.nix
+      push: square-brackets
+
+  curly-braces:
+    - match: \}
+      scope: punctuation.section.block.end.nix
+      pop: true
+    - include: main
+
+  round-braces:
+    - match: \)
+      scope: punctuation.section.group.end.nix
+      pop: true
+    - include: main
+
+  square-brackets:
+    - match: \]
+      scope: punctuation.section.brackets.end.nix
+      pop: true
+    - include: main

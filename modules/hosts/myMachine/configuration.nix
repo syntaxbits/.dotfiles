@@ -8,6 +8,7 @@
       self.nixosModules.git
       self.nixosModules.home-manager
       self.nixosModules.zsh
+      self.nixosModules.appConfigs
       ];
 
     # Bootloader.
