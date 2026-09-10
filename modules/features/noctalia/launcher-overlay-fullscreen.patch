@@ -1,0 +1,15 @@
+diff --git a/Modules/Panels/Launcher/LauncherOverlayWindow.qml b/Modules/Panels/Launcher/LauncherOverlayWindow.qml
+index be06e97..c54f873 100644
+--- a/Modules/Panels/Launcher/LauncherOverlayWindow.qml
++++ b/Modules/Panels/Launcher/LauncherOverlayWindow.qml
+@@ -117,8 +117,8 @@ Variants {
+       // Launcher panel with position-based anchoring
+       Item {
+         id: launcherPanel
+-        width: Math.round(Math.max(parent.width * 0.25, launcherWindow.listPanelWidth + Style.margin2L * 2))
+-        height: Math.round(Math.max(parent.height * 0.5, 600 * Style.uiScaleRatio))
++        width: parent.width
++        height: parent.height
+         clip: false
+ 
+         // Entrance animation

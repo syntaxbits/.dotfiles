@@ -1,0 +1,17 @@
+diff --git a/Modules/Panels/Launcher/LauncherListDelegate.qml b/Modules/Panels/Launcher/LauncherListDelegate.qml
+index 57cdeb5..ba262e3 100644
+--- a/Modules/Panels/Launcher/LauncherListDelegate.qml
++++ b/Modules/Panels/Launcher/LauncherListDelegate.qml
+@@ -49,9 +49,9 @@ NBox {
+ 
+       // Icon badge or Image preview or Emoji
+       Item {
+-        visible: !modelData.hideIcon
+-        Layout.preferredWidth: modelData.hideIcon ? 0 : launcher.badgeSize
+-        Layout.preferredHeight: modelData.hideIcon ? 0 : launcher.badgeSize
++        visible: !!modelData.displayString || !!modelData.isImage || !!modelData.colorHex
++        Layout.preferredWidth: visible ? launcher.badgeSize : 0
++        Layout.preferredHeight: visible ? launcher.badgeSize : 0
+ 
+         // Icon background
+         Rectangle {

@@ -2,6 +2,12 @@
   perSystem = { pkgs, ... }: {
     packages.myNoctalia = inputs.wrapper-modules.wrappers.noctalia-shell.wrap {
       inherit pkgs; # THIS PART IS VERY IMPORTAINT, I FORGOT IT IN THE VIDEO!!!
+      package = pkgs.noctalia-shell.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ./noctalia/launcher-overlay-fullscreen.patch
+          ./noctalia/launcher-no-icons.patch
+        ];
+      });
       settings = (builtins.fromJSON(builtins.readFile ./noctalia.json)).settings;
     };
   };
