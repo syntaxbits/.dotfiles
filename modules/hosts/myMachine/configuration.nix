@@ -7,6 +7,7 @@
       self.nixosModules.niri
       self.nixosModules.git
       self.nixosModules.home-manager
+      self.nixosModules.zsh
       ];
 
     # Bootloader.
@@ -83,6 +84,7 @@
   users.users."riot" = {
     isNormalUser = true;
     description = "riot";
+    shell = pkgs.zsh;
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
     #  thunderbird
@@ -109,8 +111,10 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
-     polkit_gnome 
+
      beauty-line-icon-theme
+     nh
+     polkit_gnome 
      sweet-folders
      sweet-nova
   ];  
