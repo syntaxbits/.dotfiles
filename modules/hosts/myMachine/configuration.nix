@@ -6,6 +6,7 @@
       self.nixosModules.myMachineHardware
       self.nixosModules.niri
       self.nixosModules.git
+      self.nixosModules.home-manager
       ];
 
     # Bootloader.
@@ -108,27 +109,17 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
-     sublime4
-     brave
-     kitty
-     ghostty
-     nemo
-     bitwarden-desktop
-     tree
-     gitkraken
-     opencode
      polkit_gnome 
-     telegram-desktop
-     lxappearance
-     themechanger 
-     iosevka
-     nerd-fonts.fira-code
-     nerd-fonts.fira-mono
      beauty-line-icon-theme
      sweet-folders
      sweet-nova
-     clementine
-     haruna
+  ];  
+
+  # Install fonts system-wide so they are available to all users and GDM
+  fonts.packages = with pkgs; [
+    iosevka
+    nerd-fonts.fira-code
+    nerd-fonts.fira-mono
   ];  
 
   # Some programs need SUID wrappers, can be configured further or are
