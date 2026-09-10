@@ -6,6 +6,7 @@
         patches = (old.patches or [ ]) ++ [
           ./noctalia/launcher-overlay-fullscreen.patch
           ./noctalia/launcher-no-icons.patch
+          ./noctalia/launcher-no-background.patch
         ];
       });
       settings = (builtins.fromJSON(builtins.readFile ./noctalia.json)).settings;
