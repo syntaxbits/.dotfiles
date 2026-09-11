@@ -12,6 +12,8 @@
           brave
           kitty
           ghostty
+          motrix
+          uget  
           nemo
           bitwarden-desktop
           tree

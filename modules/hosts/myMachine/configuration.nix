@@ -105,6 +105,27 @@
   nixpkgs.config.problems.handlers = {
              sublimetext4.broken = "warn"; 
            };
+
+  # Fix plugin_host-3.8 crash: nixpkgs removed openssl_1_1, so keep the
+  # OpenSSL 1.1 libs bundled by upstream in the tar.xz that nixpkgs deletes.
+  nixpkgs.overlays = [
+    (final: prev: let
+      origBin = prev.sublime4.passthru.unwrapped;
+      patchedBin = origBin.overrideAttrs (old: {
+        installPhase = lib.replaceStrings
+          [ "rm libcrypto.so.1.1 libssl.so.1.1" ]
+          [ "# keep bundled OpenSSL 1.1 required by plugin_host-3.8" ]
+          old.installPhase;
+      });
+    in {
+      sublime4 = prev.sublime4.overrideAttrs (old: {
+        installPhase = lib.replaceStrings
+          [ "${origBin}" ]
+          [ "${patchedBin}" ]
+          old.installPhase;
+      });
+    })
+  ];
   
 
   # List packages installed in system profile. To search, run:
