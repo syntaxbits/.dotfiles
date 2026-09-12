@@ -24,7 +24,8 @@
           gd = "git diff";
           grep = "grep --color=auto";
           mkd = "mkdir -p";
-          nu = "nh os switch -u ~/.dotfiles#myMachine";
+          nu = "nh os switch ~/.dotfiles#myMachine";
+          nfu = "nh flake update ~/.dotfiles";
           nhco = "nh clean all -k5 -K5d --optimise";
           nhc = "nh clean all -k5 -K5d";
           flatc = "flatpak uninstall --all --delete-data";
