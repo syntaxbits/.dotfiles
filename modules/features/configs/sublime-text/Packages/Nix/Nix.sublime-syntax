@@ -33,7 +33,7 @@
 # expression terminator next: (?=([\])};,]|\b(else|then)\b))
 # match anything coming next: (?=.?)
 # match until end of file: $^
-
+%YAML 1.2
 ---
 name: Nix
 scopeName: source.nix
