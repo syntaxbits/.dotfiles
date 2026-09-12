@@ -27,7 +27,7 @@
           nu = "nh os switch ~/.dotfiles#myMachine";
           nfu = "nh flake update ~/.dotfiles";
           nhco = "nh clean all -k5 -K5d --optimise";
-          nhc = "nh clean all -k5 -K5d";
+          nhc = "nh clean all -k5 -K2d";
           flatc = "flatpak uninstall --all --delete-data";
           hpr = "/home/riot/.dotfiles/scripts/hprop.sh";
           lc = "colorls -lah";
