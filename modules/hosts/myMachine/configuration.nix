@@ -9,7 +9,11 @@
       self.nixosModules.home-manager
       self.nixosModules.zsh
       self.nixosModules.appConfigs
+      self.nixosModules.flatpak
       ];
+
+    # Toggle the flatpak feature on/off declaratively
+    features.flatpak.enable = true;
 
     # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -96,7 +100,7 @@
   nixpkgs.config.allowUnfree = true;
   
   # Allow unsecure packages
-  nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
+  nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" "pencil-3.1.0"];
 
   # Allow experimental features
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -116,13 +120,26 @@
           [ "rm libcrypto.so.1.1 libssl.so.1.1" ]
           [ "# keep bundled OpenSSL 1.1 required by plugin_host-3.8" ]
           old.installPhase;
+        # Unversioned symlinks so Package Control's oscrypto (uses
+        # ctypes/dlopen, not RPATH) can find the bundled OpenSSL 1.1.
+        postFixup = (old.postFixup or "") + ''
+          ln -sfn libcrypto.so.1.1 "$out/libcrypto.so"
+          ln -sfn libssl.so.1.1 "$out/libssl.so"
+        '';
       });
+      # Prepend the bundled lib dir to LD_LIBRARY_PATH in every launcher
+      # (sublime_text/subl/sublime/sublime4 + desktop entry) so plugin_host
+      # can dlopen libcrypto/libssl for Package Control.
     in {
       sublime4 = prev.sublime4.overrideAttrs (old: {
-        installPhase = lib.replaceStrings
-          [ "${origBin}" ]
-          [ "${patchedBin}" ]
-          old.installPhase;
+        installPhase =
+          lib.replaceStrings
+            [ "${origBin}" ]
+            [ "${patchedBin}" ]
+            (lib.replaceStrings
+              [ "makeWrapper \"${origBin}/sublime_text\" \"$out/bin/sublime_text\"" ]
+              [ "makeWrapper \"${origBin}/sublime_text\" \"$out/bin/sublime_text\" --prefix LD_LIBRARY_PATH : \"${origBin}\"" ]
+              old.installPhase);
       });
     })
   ];
@@ -136,6 +153,8 @@
 
      beauty-line-icon-theme
      nh
+     lxappearance
+     themechanger
      polkit_gnome 
      sweet-folders
      sweet-nova

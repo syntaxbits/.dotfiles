@@ -8,21 +8,39 @@
       users."riot" = { pkgs, ... }: {
         home.stateVersion = "26.05";
         home.packages = with pkgs; [
+        # audio
+          clementine
+
+        # developer 
+          boxbuddy         
+          gitkraken
+          jetbrains.idea
+          pencil
+          opencode
+
+        # editors
           sublime4
+
+        # files
+          nemo
+          tree
+
+        # internet
           brave
+          discord
+          motrix
+          telegram-desktop
+          tixati
+          uget
+
+        # security
+          bitwarden-desktop
+
+        # system
           kitty
           ghostty
-          motrix
-          uget  
-          nemo
-          bitwarden-desktop
-          tree
-          gitkraken
-          opencode
-          telegram-desktop
-          lxappearance
-          themechanger
-          clementine
+
+        # video
           haruna
         ];
       };
