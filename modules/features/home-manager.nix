@@ -29,6 +29,7 @@
           brave
           discord
           motrix
+          nicotine-plus
           telegram-desktop
           tixati
           uget

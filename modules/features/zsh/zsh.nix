@@ -3,6 +3,8 @@
     programs.zsh.enable = true;
 
     home-manager.users."riot".imports = [{
+      programs.fzf.enable = true;
+
       programs.zsh = {
         enable = true;
         enableCompletion = true;

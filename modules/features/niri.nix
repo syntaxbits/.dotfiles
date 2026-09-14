@@ -74,7 +74,21 @@
 
           "Mod+G".spawn-sh = lib.getExe pkgs.ghostty;
           "Mod+Q".close-window = {};
-          "Mod+D".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call launcher toggle";
+           "Mod+D".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call launcher toggle";
+
+          # Volume keys
+          "XF86AudioRaiseVolume".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call volume increase";
+          "XF86AudioLowerVolume".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call volume decrease";
+          "XF86AudioMute".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call volume mute";
+
+          # Brightness keys
+          "XF86MonBrightnessUp".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call brightness increase";
+          "XF86MonBrightnessDown".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call brightness decrease";
+
+          # Media keys
+          "XF86AudioPlay".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call media playPause";
+          "XF86AudioNext".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call media next";
+          "XF86AudioPrev".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call media previous";
         };
       };
     };
