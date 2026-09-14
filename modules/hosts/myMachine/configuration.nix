@@ -24,6 +24,11 @@
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Panel is wired to the NVIDIA dGPU (nouveau, card0); the ACPI video stub and
+  # the force-loaded nvidia_wmi_ec_backlight phantom do NOT drive the physical
+  # backlight. Lenovo EC (ideapad) control is exposed via the vendor backlight.
+  boot.kernelParams = [ "acpi_backlight=vendor" ];
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -95,11 +100,18 @@
     isNormalUser = true;
     description = "riot";
     shell = pkgs.zsh;
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "video" ];
     packages = with pkgs; [
     #  thunderbird
     ];
   };
+
+  # Grant the video group write access to backlight so brightnessctl (used by
+  # noctalia brightness keys/OSD) can work for unprivileged users.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
+    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+  '';
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

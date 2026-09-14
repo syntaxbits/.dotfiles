@@ -1,0 +1,121 @@
+# Session history
+
+Log of work done across sessions. Started 2026-09-14.
+
+## 2026-09-14 — Fix laptop brightness hotkeys (Lenovo LOQ, hybrid graphics)
+
+Compositor: niri (Wayland). Brightness/volume/media keys are bound in
+`modules/features/niri.nix` to spawn-sh the wrapped `myNoctalia` shell:
+`noctalia ipc call brightness increase|decrease`.
+
+### Symptoms
+- Volume keys already worked (via PipeWire, per-user).
+- Brightness keys did nothing.
+
+### Diagnosis
+- Two backlight devices exist: `acpi_video0` (max 49) and
+  `nvidia_wmi_ec_backlight` (max 800). The latter is the real panel control
+  (forced on via `boot.extraModprobeConfig = "options nvidia_wmi_ec_backlight force=1"`).
+- 2 root causes:
+  1. `noctalia.json` (baked into the wrapped noctalia package at build time)
+     mapped output `eDP-1` to device `nvidia_ec_backlight` — never existed.
+     `brightnessctl -d nvidia_ec_backlight` is a no-op. Real name:
+     `nvidia_wmi_ec_backlight`.
+  2. `/sys/class/backlight/*/brightness` is `root:root` mode 644 and user
+     `riot` is not in the `video` group; no udev rule granted group-write,
+     so even the correct device failed with EACCES.
+
+### Changes applied
+- `modules/features/noctalia.json`
+  - `"device": "nvidia_ec_backlight"` -> `"device": "nvidia_wmi_ec_backlight"`
+    (backlightDeviceMappings for output `eDP-1`).
+- `modules/hosts/myMachine/configuration.nix`
+  - `users.users.riot.extraGroups` now `[ "networkmanager" "wheel" "video" ]`.
+  - Added `services.udev.extraRules` to `chgrp video` + `chmod g+w` on every
+    `/sys/class/backlight/%k/brightness` on ADD (standard brightnessctl rule).
+
+### How to apply (needs root)
+```sh
+sudo nixos-rebuild switch --flake /home/riot/.dotfiles#myMachine
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=backlight
+```
+Then log out/in of the niri session (applies `video` group; restarts
+noctalia so it loads the newly baked config).
+
+### Verification
+- `ls -l /sys/class/backlight/*/brightness` -> expect `-rw-rw-r-- 1 root video`.
+- Press `XF86MonBrightnessUp/Down` -> screen + noctalia OSD change.
+
+### Notes / gotchas
+- The nix flake target is `nixosConfigurations.myMachine` (flake at
+  `~/.dotfiles`, flake-parts + import-tree).
+- `boot.extraModprobeConfig` with `nvidia_wmi_ec_backlight force=1` was added
+  in a prior (uncommitted) edit; it is required for the device to exist.
+- The git tree in `~/.dotfiles` has uncommitted changes — commit if desired.
+- `noctalia.json` is read by Nix at build time (`builtins.fromJSON`), so
+  runtime edits under `~/.config/noctalia` are not what the launcher uses;
+  rebuild the package to bake config in.
+- Volume worked because PipeWire is per-user; brightness needs sysfs write
+  access, hence the udev rule + `video` group.
+
+## 2026-09-14 (later) — Physical brightness STILL not changing; prior fix was a dead end
+
+### Findings (diagnostics during this session)
+- Keys fire and noctalia OSD reacts, but the panel never moves physically.
+- Root cause: NEITHER sysfs backlight device actually drives the panel:
+  - `acpi_video0` (max 49): writes persist (file/actual both update to 12/49)
+    but the screen ignores them -> dead ACPI stub for this BIOS/graphics mode.
+  - `nvidia_wmi_ec_backlight` (max 800): value accepted, `actual_brightness`
+    stays 0, OSD reacts via watchers, but no physical change -> phantom. It is
+    force-loaded by nouveau (there IS no proprietary nvidia driver in use).
+- Hardware reality:
+  - Panel `eDP-1` (1920x1080@144) is wired to the NVIDIA dGPU "card0" (PCI
+    0000:01:00.0, driver nouveau, runtime active, 2.5 GT/s).
+  - iGPU amdgpu "card1" (PCI 0000:06:00.0/00:08.1) is up but all its outputs
+    (incl. `card1-eDP-2`) are disconnected -> dynamic MUX in discrete mode.
+  - GPU-native backlight is exposed nowhere in `/sys/class/backlight`.
+- udev rule (chgrp video + chmod g+w) never applied at the earlier boot (files
+  still 644 root:root), but that's moot since neither device drives the panel.
+
+### Change applied (uncommitted)
+- `modules/hosts/myMachine/configuration.nix`
+  - REMOVED `boot.extraModprobeConfig = "options nvidia_wmi_ec_backlight force=1"`.
+  - ADDED `boot.kernelParams = [ "acpi_backlight=vendor" ]` so the Lenovo
+    vendor/ideapad EC backlight takes over from the dead ACPI video stub.
+
+### Next (pending hardware test)
+- Rebuild + reboot, confirm `/sys/class/backlight/ideapad` exists and actually
+  changes the physical panel.
+- If it works: map `eDP-1 -> ideapad` in `modules/features/noctalia.json`,
+  rerun udev trigger (or rely on fresh add events), restart noctalia.
+- Fallbacks if `ideapad` is also dead: proprietary NVIDIA driver (panel is
+  dGPU-driven), or BIOS graphics mode -> iGPU/MShybrid so `amdgpu_bl0` works.
+
+## 2026-09-14 — Step 3 implemented: acpi_backlight=vendor + ideapad backlight WORKS
+
+### Hardware test passed
+- `/proc/cmdline` includes `acpi_backlight=vendor` (rebooted with it active).
+- `/sys/class/backlight/ideapad` exists (max 11), owned `root:video` mode 664 —
+  the udev rule applied at this boot.
+- Write test (as user `riot`): wrote 2 -> brightness=2 AND actual_brightness=2;
+  restored 1 -> 1/1. Unlike the nvidia phantom (actual stayed 0), this device
+  genuinely tracks the panel. Physical screen confirmed moving.
+
+### Changes applied
+- `modules/features/noctalia.json`
+  - `backlightDeviceMappings`: `"device": "nvidia_wmi_ec_backlight"` ->
+    `"device": "ideapad"` for output `eDP-1`.
+- Rebuilt package to bake config in (noctalia.json is read by Nix at build time):
+  `nix build .#myNoctalia` -> `/nix/store/4yy2fxnwxaqazlsbk7xk8d85j6kjzcab-noctalia-shell-4.7.7`
+  - verified `noctalia-shell-config/settings.json` now contains `"ideapad"`.
+
+### Still required (needs root, sudo prompts for password)
+The running system closure (`/nix/store/mijlx0qxq...-noctalia-shell-4.7.7`) still has
+the old mapping; niri keybinds/spawn-at-startup resolve `myNoctalia` at system build time.
+```sh
+sudo nixos-rebuild switch --flake /home/riot/.dotfiles#myMachine
+```
+Then log out/in of niri so noctalia relaunches with the new package. No udev
+trigger needed this boot (files already proper). After the switch: keys fire,
+OSD reacts, and the panel physically changes.

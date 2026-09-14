@@ -601,7 +601,9 @@
       "brightnessStep": 5,
       "enforceMinimum": true,
       "enableDdcSupport": false,
-      "backlightDeviceMappings": []
+      "backlightDeviceMappings": [
+        { "output": "eDP-1", "device": "ideapad" }
+      ]
     },
     "colorSchemes": {
       "useWallpaperColors": true,
