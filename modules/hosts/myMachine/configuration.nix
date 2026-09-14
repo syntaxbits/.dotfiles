@@ -10,13 +10,18 @@
       self.nixosModules.zsh
       self.nixosModules.appConfigs
       self.nixosModules.flatpak
+      self.nixosModules.docker
+      self.nixosModules.vagrant
       ];
 
-    # Toggle the flatpak feature on/off declaratively
+    # Feature toggles
     features.flatpak.enable = true;
+    features.docker.enable = false;
+    features.vagrant.enable = false;
 
     # Bootloader.
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixos"; # Define your hostname.
