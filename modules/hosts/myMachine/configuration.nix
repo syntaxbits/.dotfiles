@@ -12,12 +12,14 @@
       self.nixosModules.flatpak
       self.nixosModules.docker
       self.nixosModules.vagrant
+      self.nixosModules.nix-ld
       ];
 
     # Feature toggles
     features.flatpak.enable = true;
     features.docker.enable = false;
     features.vagrant.enable = false;
+    features.nix-ld.enable = true;
 
     # Bootloader.
   boot.loader.systemd-boot.enable = true;
