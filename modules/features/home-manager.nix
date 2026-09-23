@@ -15,9 +15,10 @@
           boxbuddy         
           gitkraken
           jetbrains.idea
-          openjdk
-          pencil
+          nodejs
           opencode
+          pencil
+          vscode
 
         # editors
           sublime4
@@ -29,6 +30,7 @@
         # internet
           brave
           discord
+          google-chrome
           motrix
           nicotine-plus
           telegram-desktop

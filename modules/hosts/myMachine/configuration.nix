@@ -171,10 +171,13 @@
   #  wget
 
      beauty-line-icon-theme
-     nh
+     easyeffects
+     gnome-tweaks
      lxappearance
+     nh
+     openjdk     
+     polkit_gnome
      themechanger
-     polkit_gnome 
      sweet-folders
      sweet-nova
   ];  

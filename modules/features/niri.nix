@@ -28,7 +28,7 @@
         };
 
         layout.gaps = 5;
-        layout.default-column-width.proportion = 0.5;
+        layout.default-column-width.proportion = 0.8;
 
         # 1. Set default size for floating windows to 2/3 (66%) of the display
         window-rules = [
