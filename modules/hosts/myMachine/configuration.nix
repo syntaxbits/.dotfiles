@@ -19,6 +19,11 @@
     # Feature toggles
     features.flatpak.enable = true;
     features.themes.enable = true;
+    features.themes.flatpakApplications = [
+      "com.mattjakeman.ExtensionManager"
+      "io.github.screwys.Rufin"
+      "net.xmind.XMind8"
+    ];
     features.docker.enable = false;
     features.vagrant.enable = false;
     features.nix-ld.enable = true;

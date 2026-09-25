@@ -119,3 +119,79 @@ sudo nixos-rebuild switch --flake /home/riot/.dotfiles#myMachine
 Then log out/in of niri so noctalia relaunches with the new package. No udev
 trigger needed this boot (files already proper). After the switch: keys fire,
 OSD reacts, and the panel physically changes.
+
+## 2026-09-25 — Declarative Sweet GTK/Kvantum theme feature
+
+### Scope
+- Added `features.themes.enable`, defaulting to false, for native GTK2/GTK3/GTK4
+  applications, GNOME application settings, Metacity, and Qt/Kvantum.
+- Flatpak configuration was left unchanged; the existing BeautyLine system
+  package and `/run/host/share/icons/BeautyLine` exposure remain intact. No
+  GNOME Shell theme was added.
+- Existing cursor, font, scaling, and unrelated settings are preserved. The
+  feature changes only theme, icon, and dark-preference keys.
+
+### Changes
+- `flake.nix`: added the non-flake `sweet` input from
+  `github:EliverLara/Sweet/nova`.
+- `flake.lock`: pinned Sweet to revision
+  `46e3802d3f4d9e992f94264f1d834f5f9621c03b` with narHash
+  `sha256-rB6l1u12u+X2kgwKUJRLYuBu6Q+cq5/1Arp5dMILYcE=`.
+- `modules/features/themes.nix`: packages the pinned Sweet GTK2/GTK3/GTK4 and
+  Metacity assets as `Sweet-Dark`, corrects its icon metadata to BeautyLine,
+  installs the Sweet Kvantum theme and Qt5/Qt6 Kvantum engines, and provides
+  idempotent activation for existing GTK and Kvantum files. The disabled path
+  does not manage those files or remove existing dconf values.
+- `modules/hosts/myMachine/configuration.nix`: imports the theme module and
+  enables `features.themes`.
+- Preserved the pre-existing removal of `vscode`, the `jetbrains.jdk`
+  replacement, and the `zip`/`unzip` additions.
+
+### Verification
+- `nix flake check path:/home/riot/.dotfiles --no-build` passed.
+- Nix parsing, targeted nixfmt, and `git diff --check` passed.
+- Built the Home Manager profile and activation package; verified Sweet assets,
+  Kvantum assets, and both Qt plugin paths in the generated profile.
+- Ran the activation script twice against temporary fixtures: unrelated keys
+  were preserved and the second run was identical.
+- Evaluated the feature-disabled configuration: no theme package, activation
+  entry, or theme session variables were emitted.
+- Verified BeautyLine is visible inside all three installed Flatpaks; no user
+  Flatpak overrides were present.
+
+### Status
+- The configuration was built and evaluated but not applied to the live
+  session. No commit was made.
+
+## 2026-09-25 — Declarative Sweet Flatpak GTK overrides
+
+### Scope
+- Added `features.themes.flatpakApplications`, defaulting to an empty list.
+- Configured the installed Flatpaks `com.mattjakeman.ExtensionManager`,
+  `io.github.screwys.Rufin`, and `net.xmind.XMind8` for system-wide GTK theming.
+- Kept Flatpaks GTK-only; native Qt/Kvantum configuration remains unchanged.
+
+### Changes
+- `modules/features/themes.nix`: split the Sweet GTK assets and generated GTK2
+  configuration into a reusable `sweet-gtk-theme` bridge while preserving the
+  native GTK, Metacity, and Kvantum package behavior.
+- Added a stateful system activation that applies only listed application IDs
+  with `flatpak override --system`, a read-only GTK asset mount, `GTK_DATA_PREFIX`,
+  `GTK_THEME`, and `GTK2_RC_FILES`.
+- Added cleanup for removed applications and changed theme store paths without
+  resetting unrelated Flatpak override entries.
+- `modules/hosts/myMachine/configuration.nix`: added the three application IDs
+  to the allowlist.
+
+### Verification
+- `nix flake check path:/home/riot/.dotfiles --no-build` passed.
+- The NixOS system toplevel, generated activation package, and Sweet packages
+  built successfully.
+- Verified generated GTK assets and the GTK2 config inside a Flatpak runtime.
+- Ran the generated activation script against a fake Flatpak backend for apply,
+  repeat, list-removal, and store-path replacement cases.
+- Confirmed the live system still has no system Flatpak overrides; the new
+  activation has not been applied with `nixos-rebuild switch`.
+
+### Status
+- Implementation is complete and evaluated. No live rebuild or commit was made.
