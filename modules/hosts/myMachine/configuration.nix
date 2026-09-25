@@ -10,6 +10,7 @@
       self.nixosModules.zsh
       self.nixosModules.appConfigs
       self.nixosModules.flatpak
+      self.nixosModules.themes
       self.nixosModules.docker
       self.nixosModules.vagrant
       self.nixosModules.nix-ld
@@ -17,6 +18,7 @@
 
     # Feature toggles
     features.flatpak.enable = true;
+    features.themes.enable = true;
     features.docker.enable = false;
     features.vagrant.enable = false;
     features.nix-ld.enable = true;
@@ -175,11 +177,13 @@
      gnome-tweaks
      lxappearance
      nh
-     openjdk     
+     jetbrains.jdk
      polkit_gnome
      themechanger
      sweet-folders
      sweet-nova
+     unzip
+     zip
   ];  
 
   # Install fonts system-wide so they are available to all users and GDM

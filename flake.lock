@@ -106,7 +106,25 @@
         "home-manager": "home-manager",
         "import-tree": "import-tree",
         "nixpkgs": "nixpkgs",
+        "sweet": "sweet",
         "wrapper-modules": "wrapper-modules"
+      }
+    },
+    "sweet": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786657822,
+        "narHash": "sha256-rB6l1u12u+X2kgwKUJRLYuBu6Q+cq5/1Arp5dMILYcE=",
+        "owner": "EliverLara",
+        "repo": "Sweet",
+        "rev": "46e3802d3f4d9e992f94264f1d834f5f9621c03b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "EliverLara",
+        "ref": "nova",
+        "repo": "Sweet",
+        "type": "github"
       }
     },
     "wrapper-modules": {

@@ -18,7 +18,6 @@
           nodejs
           opencode
           pencil
-          vscode
 
         # editors
           sublime4
