@@ -273,3 +273,78 @@ OSD reacts, and the panel physically changes.
   trusting an ordering constraint.
 - `writeShellApplication` sets its own `PATH`, so a stubbed binary in the
   caller's `PATH` is not used; the fixture run really did hit live gsettings.
+
+## 2026-09-25 - Session-agnostic Qt theming + user/home parameterization
+
+### Problem
+- Two related gaps blocked a clean fresh install.
+- Gap 1: the Qt theming fix lived only in niri's `environment` block, so it only
+  helped niri. Under GNOME nothing set `QT_STYLE_OVERRIDE`/`QT_PLUGIN_PATH` for
+  desktop-launched apps. Root cause: `home.sessionVariables` /
+  `home.sessionSearchVariables` land in `~/.nix-profile/etc/profile.d/hm-session-vars.sh`,
+  which only login shells source, and the `environment.d` drop-in home-manager
+  writes itself contains only `LOCALE_ARCHIVE_2_27`. A graphical session starts
+  no login shell, so neither reached it.
+- Gap 2/3: 16 hardcoded `riot` occurrences across 8 Nix files plus 3 absolute
+  `/home/riot` paths in `modules/features/noctalia.json`.
+
+### Changes
+- `modules/features/themes.nix`: added
+  `xdg.configFile."environment.d/20-sweet-theme.conf"`, which the systemd *user*
+  manager reads and exports to every service it starts. Kept the niri
+  `environment` block, because GDM launches niri directly rather than as a user
+  unit, so the two mechanisms cover different cases rather than duplicating.
+- New `modules/base.nix` exposing `flake.nixosModules.base` with `myUser`
+  (default `"riot"`) and `myUserHome` (derived). Imported first in
+  `myMachineConfiguration`. Replaced every hardcoded account reference with
+  `config.myUser` / `config.myUserHome`, and used `config.home.homeDirectory`
+  inside home-manager modules.
+
+### Verification
+- Installed the generated drop-in and ran `systemctl --user daemon-reexec`:
+  `systemctl --user show-environment` went from 0 matches to containing both
+  `QT_STYLE_OVERRIDE=Kvantum` and `QT_PLUGIN_PATH`. `systemd-run --user --wait
+  --pipe env` confirmed an app launched as a user unit actually inherits them.
+- Built a probe that instantiates the host config twice, with `myUser = "riot"`
+  and `myUser = "alice"`. For `"alice"` every derived value moved with it:
+  `users.users.alice`, HM user `alice`, `/home/alice` in the flatpak
+  `XDG_DATA_DIRS`, the IDEA `.desktop` exec/icon, the zsh `hpr`/`envExtra`
+  aliases, and `/run/media/alice` in the `media`/`work` aliases.
+- The home-manager activation for the default user built to the **same store
+  path** as before the refactor, i.e. the change is a no-op for the existing
+  account.
+- `nix flake check --no-build` passes; `niri validate` reports `config is valid`
+  and the generated `niri-config.kdl` still carries both Qt variables.
+
+### Decisions worth remembering
+- Two module-argument subtleties bit here, and both fail at eval time with a
+  misleading message:
+  - `home-manager.users.<u> = { ... }` with a *plain attrset* body has the
+    **NixOS** `config` in scope, not the home-manager one, so
+    `config.home.homeDirectory` there errors with "attribute 'home' missing".
+    Use `config.myUserHome`, or make the body a function and take `config` as an
+    argument.
+  - `home-manager.users.<u>.imports = [{ ... }]` is likewise plain data, so only
+    the NixOS-level values are visible inside it.
+- `perSystem` packages cannot read `nixosConfigurations`: that is a *top-level*
+  flake output, so `self'.nixosConfigurations` raises "attribute
+  'nixosConfigurations' missing". Wiring `myUser` through to the noctalia
+  package would need a top-level value plus `specialArgs`, not `config`.
+- The absolute paths in `modules/features/noctalia.json` were deliberately **not**
+  parameterized. That file is a settings dump exported from a running shell, so
+  its paths describe the account that produced it; there is no build-time value
+  that can rewrite them usefully, because the *source* home is exactly what the
+  flake does not know. Substituting a known name for itself is a no-op that only
+  looks like a fix. Noted in a comment where the file is read; re-export it after
+  installing under a different username.
+- Ran `nixfmt` across the touched files, found it reformatted seven of them
+  wholesale because they were never formatted to begin with, and reverted that.
+  The diff is now 64 insertions / 33 deletions, all semantic. Kept formatting as
+  found rather than mixing an unrelated reformat into the change; the two files
+  that were already nixfmt-clean are still clean.
+
+### Status
+- Committed as `f980393` (environment.d) and `3f1e643` (parameterization).
+- Nothing is live until `sudo nixos-rebuild switch --flake
+  /home/riot/.dotfiles#myMachine` and a fresh login; the current niri session is
+  still using the previous generation.
