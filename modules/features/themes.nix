@@ -215,6 +215,24 @@
               ];
             };
 
+            # profile.d above is only sourced by login shells, so it never reaches
+            # a graphical session. This drop-in is read by the systemd *user*
+            # manager, so every app it launches inherits the variables no matter
+            # which compositor is running. The niri environment block in
+            # modules/features/niri.nix is still needed: GDM starts niri directly
+            # rather than as a user unit, so neither mechanism covers the other.
+            xdg.configFile."environment.d/20-sweet-theme.conf".text =
+              let
+                pluginPath = lib.concatStringsSep ":" [
+                  qt5PluginPath
+                  qt6PluginPath
+                ];
+              in
+              ''
+                QT_STYLE_OVERRIDE=Kvantum
+                QT_PLUGIN_PATH=${pluginPath}
+              '';
+
             # Must run after writeBoundary: that is where home-manager writes and
             # links xdg.configFile / home.file targets. Home Manager 26.11 renamed
             # this element from linkBoundary, and an entryAfter naming a
