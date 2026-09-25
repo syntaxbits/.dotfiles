@@ -53,6 +53,7 @@ noctalia so it loads the newly baked config).
 - `boot.extraModprobeConfig` with `nvidia_wmi_ec_backlight force=1` was added
   in a prior (uncommitted) edit; it is required for the device to exist.
 - The git tree in `~/.dotfiles` has uncommitted changes — commit if desired.
+  (Superseded: committed as `66ae517`.)
 - `noctalia.json` is read by Nix at build time (`builtins.fromJSON`), so
   runtime edits under `~/.config/noctalia` are not what the launcher uses;
   rebuild the package to bake config in.
@@ -161,7 +162,7 @@ OSD reacts, and the panel physically changes.
 
 ### Status
 - The configuration was built and evaluated but not applied to the live
-  session. No commit was made.
+  session. No commit was made. (Superseded: committed as `201a734`.)
 
 ## 2026-09-25 — Declarative Sweet Flatpak GTK overrides
 
@@ -195,3 +196,80 @@ OSD reacts, and the panel physically changes.
 
 ### Status
 - Implementation is complete and evaluated. No live rebuild or commit was made.
+  (Superseded: committed as `c46a762`; still never applied to the live session.)
+
+## 2026-09-25 — Why the theming never took effect; Qt apps light from the desktop
+
+### Symptom
+- After the Sweet theme work, GTK apps looked dark but Clementine (Qt5) did not.
+
+### Root cause (two independent bugs)
+1. **The activation had never run.** `/run/current-system` was still
+   `nixos-26.11.20260910.8ce4ef6` (Sep 10) and `~/.config/gtk-2.0/gtkrc` did not
+   exist, `kvantum.kvconfig` had no `theme=` line, and gsettings was still
+   `Adwaita`. The home profile had been relinked (it contained `sweet-dar` and
+   both Kvantum style plugins) but no HM activation ever executed. The "dark GTK"
+   seen beforehand was just pre-existing Adwaita plus
+   `gtk-application-prefer-dark-theme=true`, not Sweet-Dark.
+2. **Session environment never reached the compositor.** `home.sessionVariables`
+   only land in `~/.nix-profile/etc/profile.d/hm-session-vars.sh`, which login
+   shells source. niri is started by the session manager, so it had neither
+   `QT_STYLE_OVERRIDE` nor `QT_PLUGIN_PATH`. Confirmed: `/proc/<niri>/environ`
+   had neither. So apps launched from the desktop ran with Qt's default light
+   style, while the same app launched from a terminal got Kvantum.
+   - `QT_PLUGIN_PATH` is genuinely required here: the nixpkgs `clementine` bin is
+     a Qt wrapper, but it *extends* rather than replaces an inherited
+     `QT_PLUGIN_PATH`, so setting it upstream works.
+
+### Changes applied
+- `modules/features/niri.nix`
+  - Added an `environment` block to the niri settings setting `QT_STYLE_OVERRIDE`
+    and `QT_PLUGIN_PATH` to the Kvantum Qt5/Qt6 plugin store paths, so the
+    compositor and every app it spawns inherit them. niri's `XDG_DATA_DIRS`
+    already contains `~/.nix-profile/share`, where the Sweet theme lives.
+- `modules/features/themes.nix`
+  - `entryAfter [ "installPackages" ]` -> `entryAfter [ "writeBoundary" ]`.
+    Home Manager 26.11 renamed this activation element from `linkBoundary`;
+    naming a non-existent element is silently unconstrained, so the old value
+    let `writeBoundary` re-create the theme files after the activation wrote
+    them. Confirmed in the generated `activate` step order.
+  - `set_ini` now rewrites a key scoped to its INI section (awk, plus
+    `pkgs.gawk` in `runtimeInputs`). The old file-wide `grep`/`sed` rewrote
+    every same-named key in every section: on a fixture with `[Appearance]
+    theme=LightOne` it clobbered that key to `Sweet#`. The new version leaves
+    other sections alone and is idempotent.
+
+### Verification
+- `nix flake check path:/home/riot/.dotfiles --no-build` passed; `nixfmt --check`
+  clean on `themes.nix`. (`niri.nix` is deliberately left unformatted: it was
+  never nixfmt-clean at HEAD, so formatting it would add unrelated churn.)
+- Built `myNiri`; `niri validate` reports `config is valid` and the generated
+  `niri-config.kdl` carries the `environment` block with the expected store paths.
+- Built the HM `activationPackage`; the generated `activate-sweet-theme` has
+  gawk on PATH and `applySweetTheme` now runs after `writeBoundary`.
+- 7-case `set_ini` unit test passes (create, replace, append-missing-section,
+  cross-section scoping, insert-missing-key, idempotency, nested mkdir). The old
+  implementation fails the cross-section case, confirming the bug was real.
+- Ran the real generated activation against a fixture home: unrelated keys
+  (`gtk-font-name`, `no_xcursor`, `[Appearance]`) preserved, three runs identical.
+- Confirmed on the live system that `libkvantum.so` is mapped into a running
+  `clementine` only when `QT_STYLE_OVERRIDE`/`QT_PLUGIN_PATH` are present.
+- `Sweet.kvconfig` confirmed dark by its own values (`window.color=#161925`,
+  `base.color=#181b28`, light text) vs the previous `Adwaita#`
+  (`base.color=#2E2E2E`).
+
+### Status
+- The config was applied to the live session by running the generated activation
+  directly (and `kvantum.kvconfig` was set to `Sweet#`), so GTK and Kvantum are
+  themed now. Side effect: gsettings `gtk-theme` moved `Adwaita` -> `Sweet-Dark`,
+  which is the intended value.
+- The `niri.nix` environment fix is committed but **not yet in effect**: it needs
+  `nixos-rebuild switch` and a new login so niri picks up the regenerated config.
+  Until then, launching Clementine from a terminal still themes correctly.
+
+### Gotchas
+- `lib.hm.dag.entryAfter` with an unknown element name fails open, not closed.
+  Always check the element names in the generated `activate` script before
+  trusting an ordering constraint.
+- `writeShellApplication` sets its own `PATH`, so a stubbed binary in the
+  caller's `PATH` is not used; the fixture run really did hit live gsettings.

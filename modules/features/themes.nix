@@ -142,6 +142,7 @@
               name = "activate-sweet-theme";
               runtimeInputs = [
                 pkgs.coreutils
+                pkgs.gawk
                 pkgs.gnugrep
                 pkgs.gnused
                 pkgs.glib
@@ -150,6 +151,10 @@
                 set -eu
                 home_dir=${lib.escapeShellArg homeDirectory}
 
+                # Rewrites a key inside a single INI section. Scoping matters
+                # because kvantum.kvconfig is maintained by Kvantum itself and
+                # holds many sections; a file-wide grep/sed would rewrite a
+                # same-named key belonging to some other section. Idempotent.
                 set_ini() {
                   file="$1"
                   section="$2"
@@ -158,12 +163,19 @@
                   mkdir -p "$(dirname "$file")"
                   if [ ! -f "$file" ]; then
                     printf '[%s]\n%s=%s\n' "$section" "$key" "$value" > "$file"
-                  elif grep -q "^$key=" "$file"; then
-                    sed -i "s|^$key=.*|$key=$value|" "$file"
-                  elif grep -q "^\[$section\]$" "$file"; then
-                    sed -i "/^\[$section\]$/a\\$key=$value" "$file"
-                  else
+                  elif ! grep -qxF "[$section]" "$file"; then
                     printf '\n[%s]\n%s=%s\n' "$section" "$key" "$value" >> "$file"
+                  else
+                    tmp="$(mktemp)"
+                    awk -v sec="[$section]" -v k="$key" -v v="$value" '
+                      $0 == sec { insec = 1; found = 0; print; next }
+                      insec && /^\[/ { if (!found) print k "=" v; insec = 0 }
+                      insec && index($0, k "=") == 1 { print k "=" v; found = 1; next }
+                      { print }
+                      END { if (insec && !found) print k "=" v }
+                    ' "$file" > "$tmp"
+                    cat "$tmp" > "$file"
+                    rm -f "$tmp"
                   fi
                 }
 
@@ -203,7 +215,13 @@
               ];
             };
 
-            home.activation.applySweetTheme = lib.hm.dag.entryAfter [ "installPackages" ] ''
+            # Must run after writeBoundary: that is where home-manager writes and
+            # links xdg.configFile / home.file targets. Home Manager 26.11 renamed
+            # this element from linkBoundary, and an entryAfter naming a
+            # non-existent element is silently unconstrained, so ordering only
+            # against installPackages would let writeBoundary re-create these
+            # files afterwards and silently clobber the theme settings.
+            home.activation.applySweetTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
 
               ${activation}
             '';
