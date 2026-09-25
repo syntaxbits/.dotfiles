@@ -1,6 +1,6 @@
 { self, inputs, ... }: {
-  flake.nixosModules.appConfigs = { pkgs, lib, ... }: {
-    home-manager.users."riot" = { pkgs, lib, ... }: {
+  flake.nixosModules.appConfigs = { pkgs, lib, config, ... }: {
+    home-manager.users.${config.myUser} = { pkgs, lib, ... }: {
       xdg.configFile = let
         apps = lib.filterAttrs (name: type: type == "directory") (builtins.readDir ./configs);
         appFiles = app: lib.filesystem.listFilesRecursive ./configs/${app};

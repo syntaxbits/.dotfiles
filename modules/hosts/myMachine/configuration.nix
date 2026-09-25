@@ -3,6 +3,7 @@
   flake.nixosModules.myMachineConfiguration = { config, pkgs, lib, ... }: {
     # import any other modules from here
     imports = [
+      self.nixosModules.base
       self.nixosModules.myMachineHardware
       self.nixosModules.niri
       self.nixosModules.git
@@ -105,9 +106,9 @@
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users."riot" = {
+  users.users.${config.myUser} = {
     isNormalUser = true;
-    description = "riot";
+    description = config.myUser;
     shell = pkgs.zsh;
     extraGroups = [ "networkmanager" "wheel" "video" ];
     packages = with pkgs; [

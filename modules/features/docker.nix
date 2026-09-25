@@ -8,7 +8,7 @@
         autoPrune.enable = true;
       };
 
-      users.users."riot".extraGroups = [ "docker" ];
+      users.users.${config.myUser}.extraGroups = [ "docker" ];
     };
   };
 }

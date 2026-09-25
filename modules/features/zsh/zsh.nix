@@ -1,8 +1,8 @@
 { self, inputs, ... }: {
-  flake.nixosModules.zsh = { pkgs, lib, ... }: {
+  flake.nixosModules.zsh = { pkgs, lib, config, ... }: {
     programs.zsh.enable = true;
 
-    home-manager.users."riot".imports = [{
+    home-manager.users.${config.myUser}.imports = [{
       programs.fzf.enable = true;
 
       programs.zsh = {
@@ -31,15 +31,15 @@
           nhco = "nh clean all -k10 -K5d --optimise";
           nhc = "nh clean all -k10 -K2d";
           flatc = "flatpak uninstall --all --delete-data";
-          hpr = "/home/riot/.dotfiles/scripts/hprop.sh";
+          hpr = "${config.myUserHome}/.dotfiles/scripts/hprop.sh";
           lc = "colorls -lah";
-          media = "cd /run/media/riot/MEDIA";
-          work = "cd /run/media/riot/MEDIA/repo.projects";
+          media = "cd /run/media/${config.myUser}/MEDIA";
+          work = "cd /run/media/${config.myUser}/MEDIA/repo.projects";
           home = "cd ~/";
           ai = "opencode";
         };
 
-        envExtra = "export POWERLEVEL9K_CONFIG_FILE=/home/riot/.dotfiles/modules/features/zsh/p10k.zsh";
+        envExtra = "export POWERLEVEL9K_CONFIG_FILE=${config.myUserHome}/.dotfiles/modules/features/zsh/p10k.zsh";
 
         initContent = lib.mkAfter ''
           # powerlevel10k

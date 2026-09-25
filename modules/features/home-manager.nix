@@ -1,11 +1,11 @@
 { self, inputs, ... }: {
-  flake.nixosModules.home-manager = { pkgs, lib, ... }: {
+  flake.nixosModules.home-manager = { pkgs, lib, config, ... }: {
     imports = [ inputs.home-manager.nixosModules.home-manager ];
 
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = false;
-      users."riot" = { pkgs, ... }: {
+      users.${config.myUser} = { pkgs, config, ... }: {
         home.stateVersion = "26.05";
         home.packages = with pkgs; [
         # audio
@@ -54,8 +54,8 @@
         xdg.desktopEntries.jetbrains-idea = {
           name = "udea";
           comment = "Capable and Ergonomic Java IDE";
-          exec = "/home/riot/Applications/idea/bin/idea %u";
-          icon = "/home/riot/Applications/idea/bin/idea.png";
+          exec = "${config.home.homeDirectory}/Applications/idea/bin/idea %u";
+          icon = "${config.home.homeDirectory}/Applications/idea/bin/idea.png";
           terminal = false;
           type = "Application";
           categories = [ "Development" "IDE" ];

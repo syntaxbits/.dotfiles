@@ -13,9 +13,9 @@
         '';
       };
 
-      home-manager.users."riot" = {
+      home-manager.users.${config.myUser} = {
         home.sessionVariables = {
-          XDG_DATA_DIRS = "$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:/home/riot/.local/share/flatpak/exports/share";
+          XDG_DATA_DIRS = "$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:${config.myUserHome}/.local/share/flatpak/exports/share";
         };
         programs.zsh.shellAliases.flatc = "flatpak uninstall --all --delete-data";
       };

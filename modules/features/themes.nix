@@ -125,7 +125,7 @@
             message = "features.themes.flatpakApplications requires services.flatpak.enable";
           }
         ];
-        home-manager.users."riot" =
+        home-manager.users.${config.myUser} =
           {
             config,
             lib,

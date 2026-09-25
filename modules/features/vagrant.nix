@@ -10,7 +10,7 @@
       virtualisation.libvirtd.enable = true;
       boot.kernelModules = [ "kvm-amd" "kvm-intel" ];
 
-      users.users."riot".extraGroups = [ "libvirtd" "kvm" ];
+      users.users.${config.myUser}.extraGroups = [ "libvirtd" "kvm" ];
 
       services.nfs.server.enable = true;
 

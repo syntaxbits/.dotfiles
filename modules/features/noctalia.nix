@@ -9,6 +9,13 @@
           ./noctalia/launcher-no-background.patch
         ];
       });
+      # NOTE: the absolute paths inside noctalia.json (avatar, wallpaper directory,
+      # per-output wallpaper) are produced by exporting settings from a running
+      # shell, so they describe the machine and account that produced the file
+      # rather than configuration owned by this flake. There is no build-time
+      # value that can rewrite them usefully: the source home is whatever the
+      # exporting account was called, which the flake does not know. Re-export
+      # after installing under a different username (see commands below).
       settings = (builtins.fromJSON(builtins.readFile ./noctalia.json)).settings;
     };
   };
